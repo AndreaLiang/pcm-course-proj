@@ -1,0 +1,39 @@
+---
+title: "Analysing Data on Barbell Lifts"
+output: html_document
+---
+
+## Executive Summary
+
+This project develops an algorithm which predicts whether a person does a weight lifting exercise correctly or incorrectly based on data from accelerometers on the belt, forearm, arm, and dumbell of the participants. The data are taken from Groupware@LES's Human Activity Recognition project. 
+
+## Getting and Cleaning Data
+
+We load the data and remove the variables that hypothetically should not have bearing on the prediction algorithm (e.g. the index number, timestamps, window number etc). We also remove variables with a large proportion of missing observations. 
+
+```{r, cache=TRUE}
+training <- read.csv("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", na.strings = c("", "#DIV/0!", "NA"))
+testing <- read.csv("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", na.strings = c("", "#DIV/0!", "NA"))
+
+library(caret)
+                                      
+trainreg <- training[,-c(1,3,4,5,6,7, 12:36, 50:59, 69:83, 87:101, 103:112, 125:139, 141:150)]
+```
+
+## Creating the Model
+
+We then create a model to predict, based on the data collected, whether the participants executed the exercise correctly (corresponding to Class A) or incorrectly (corresponding to Classes B, C, D and E). 
+
+Using the 'train' function in R's *caret* package, we first pre-process the data using Principal Components Analysis, then create a model using the bootstrap aggregating ('bagging') method. We also use the 'trainControl' function to conduct 40-fold cross-validation. 
+
+The resampling results show in sample accuracy of 97.2%. We therefore expect the out-of-sample error to be larger than 2.8%.
+
+```{r, cache=TRUE}
+trctrl <- trainControl(method="cv", number=40)
+
+modFit <- train(trainreg$classe~., method="treebag", preProcess="pca", data=trainreg, trControl=trctrl)
+
+print(modFit)                        
+```
+
+ 
